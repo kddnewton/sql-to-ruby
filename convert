@@ -1,8 +1,14 @@
+#!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'gda'
+require 'bundler/inline'
 
-module SQLToRuby
+gemfile do
+  source 'https://rubygems.org'
+  gem 'gda'
+end
+
+module Converter
   module Conversions
     refine GDA::Nodes::Expr do
       def convert
@@ -84,3 +90,5 @@ module SQLToRuby
     GDA::SQL::Parser.new.parse(sql).ast.convert
   end
 end
+
+puts Converter.convert(ARGV.first)
