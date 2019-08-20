@@ -9,6 +9,34 @@ gemfile do
 end
 
 module Converter
+  class Printer
+    LINE_LENGTH = 80
+    attr_reader :source, :clauses
+
+    def initialize(source)
+      @source = source
+      @clauses = []
+    end
+
+    def <<(clause)
+      clauses << clause
+    end
+
+    def print
+      if source.length + clauses.sum(&:length) <= LINE_LENGTH
+        "#{source}#{clauses.join}"
+      else
+        "#{source}#{clauses.map { |clause| "\n  #{clause}" }.join}"
+      end
+    end
+
+    def self.print(source)
+      instance = new(source)
+      yield instance
+      instance.print
+    end
+  end
+
   module Conversions
     refine GDA::Nodes::Expr do
       def convert
@@ -61,24 +89,22 @@ module Converter
 
     refine GDA::Nodes::Select do
       def convert
-        ruby = source
+        Printer.print(source) do |printer|
+          if expr_list.length > 1 || expr_list[0].expr.value != '*'
+            printer << ".select(#{expr_list.map { |node| node.convert(source) }.join(', ')})"
+          elsif !where_cond && !limit_count && !limit_offset
+            printer << '.all'
+          end
 
-        if expr_list.length > 1 || expr_list[0].expr.value != '*'
-          ruby = "#{ruby}.select(#{expr_list.map { |node| node.convert(source) }.join(', ')})"
-        elsif !where_cond && !limit_count && !limit_offset
-          ruby = "#{ruby}.all"
+          printer << ".where(#{where_cond.convert})" if where_cond
+
+          if order_by.length > 0
+            printer << ".order(#{order_by.map { |node| node.convert(source) }.join(', ')})"
+          end
+
+          printer << ".limit(#{limit_count.convert})" if limit_count
+          printer << ".offset(#{limit_offset.convert})" if limit_offset
         end
-
-        ruby = "#{ruby}.where(#{where_cond.convert})" if where_cond
-
-        if order_by.length > 0
-          ruby = "#{ruby}.order(#{order_by.map { |node| node.convert(source) }.join(', ')})"
-        end
-
-        ruby = "#{ruby}.limit(#{limit_count.convert})" if limit_count
-        ruby = "#{ruby}.offset(#{limit_offset.convert})" if limit_offset
-
-        ruby
       end
 
       def source
