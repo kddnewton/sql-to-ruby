@@ -115,16 +115,13 @@ module Converter
 
     refine GDA::Nodes::SelectField do
       def convert(source)
-        if expr
-          field = "Arel.sql(\"#{expr.convert}\")".dup
-          field << ".as(\"#{as}\")" if as
-          return field
+        if field_name
+          symbol = field_name.to_sym.inspect
+          as ? "#{source}.arel_table[#{symbol}].as(#{as})" : symbol
+        else
+          field = "Arel.sql(\"#{expr.convert}\")"
+          as ? "#{field}.as(\"#{as}\")" : field
         end
-
-        symbol = field_name.to_sym.inspect
-        return symbol unless as
-
-        "#{source}.arel_table[#{symbol}].as(#{as})"
       end
     end
 
