@@ -47,13 +47,13 @@ module Converter
 
         if expr_list.length > 1 || expr_list[0].expr.value != '*'
           ruby = "#{ruby}.select(#{expr_list.map { |node| node.convert(source) }.join(', ')})"
-        else
+        elsif !where_cond && !limit_count && !limit_offset
           ruby = "#{ruby}.all"
         end
 
-        if where_cond
-          ruby = "#{ruby}.where(#{where_cond.convert})"
-        end
+        ruby = "#{ruby}.where(#{where_cond.convert})" if where_cond
+        ruby = "#{ruby}.limit(#{limit_count.convert})" if limit_count
+        ruby = "#{ruby}.offset(#{limit_offset.convert})" if limit_offset
 
         ruby
       end
