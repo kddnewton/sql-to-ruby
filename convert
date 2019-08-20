@@ -12,12 +12,14 @@ module Converter
   module Conversions
     refine GDA::Nodes::Expr do
       def convert
-        if cond
+        if func
+          func.convert
+        elsif cond
           cond.convert
         elsif value
           value
         else
-          raise 'Cannot yet understand more complex expressions'
+          raise 'Unsupported expression type'
         end
       end
     end
@@ -29,6 +31,12 @@ module Converter
 
       def simple?
         targets.length == 1 && targets[0].simple?
+      end
+    end
+
+    refine GDA::Nodes::Function do
+      def convert
+        "#{function_name}(#{args_list.map(&:convert).join(', ')})"
       end
     end
 
@@ -81,6 +89,12 @@ module Converter
 
     refine GDA::Nodes::SelectField do
       def convert(source)
+        if expr
+          field = "Arel.sql(\"#{expr.convert}\")".dup
+          field << ".as(\"#{as}\")" if as
+          return field
+        end
+
         symbol = field_name.to_sym.inspect
         return symbol unless as
 
