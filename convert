@@ -13,9 +13,9 @@ module Converter
     LINE_LENGTH = 80
     attr_reader :source, :clauses
 
-    def initialize(source)
+    def initialize(source, clauses = [])
       @source = source
-      @clauses = []
+      @clauses = clauses
     end
 
     def <<(clause)
@@ -52,26 +52,21 @@ module Converter
       end
     end
 
-    refine GDA::Nodes::From do
-      def convert
-        targets[0].convert
-      end
-
-      def simple?
-        targets.length == 1 && targets[0].simple?
-      end
-    end
-
     refine GDA::Nodes::Function do
       def convert
         "#{function_name}(#{args_list.map(&:convert).join(', ')})"
       end
     end
 
+    refine GDA::Nodes::Join do
+      def convert(target)
+        ".joins(:#{target.convert})"
+      end
+    end
+
     refine GDA::Nodes::Operation do
       def convert
         raise 'Cannot yet understand operators besides =' unless operator == '='
-
         left, right = operands.map(&:convert)
         "#{left}: \"#{right}\""
       end
@@ -89,11 +84,19 @@ module Converter
 
     refine GDA::Nodes::Select do
       def convert
+        source = from.targets[0].convert[0...-1].capitalize
+
         Printer.print(source) do |printer|
           if expr_list.length > 1 || expr_list[0].expr.value != '*'
             printer << ".select(#{expr_list.map { |node| node.convert(source) }.join(', ')})"
-          elsif !where_cond && !limit_count && !limit_offset
+          elsif from.targets.length == 1 && !where_cond && order_by.length == 0 && !limit_count && !limit_offset
             printer << '.all'
+          end
+
+          if from.targets.length > 0
+            from.joins.zip(from.targets[1..-1]).each do |join, target|
+              printer << join.convert(target)
+            end
           end
 
           printer << ".where(#{where_cond.convert})" if where_cond
@@ -105,11 +108,6 @@ module Converter
           printer << ".limit(#{limit_count.convert})" if limit_count
           printer << ".offset(#{limit_offset.convert})" if limit_offset
         end
-      end
-
-      def source
-        raise 'Cannot yet understand multiple table queries' unless from.simple?
-        from.convert[0...-1].capitalize
       end
     end
 
@@ -128,10 +126,6 @@ module Converter
     refine GDA::Nodes::Target do
       def convert
         table_name
-      end
-
-      def simple?
-        !as
       end
     end
   end
