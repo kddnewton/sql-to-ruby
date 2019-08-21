@@ -1,43 +1,4 @@
-# frozen_string_literal: true
-
-require 'bundler/inline'
-
-gemfile do
-  source 'https://rubygems.org'
-
-  gem 'gda'
-  gem 'sinatra'
-end
-
 module SQLToRuby
-  class Printer
-    LINE_LENGTH = 80
-    attr_reader :source, :clauses
-
-    def initialize(source, clauses = [])
-      @source = source
-      @clauses = clauses
-    end
-
-    def <<(clause)
-      clauses << clause
-    end
-
-    def print
-      if source.length + clauses.sum(&:length) <= LINE_LENGTH
-        "#{source}#{clauses.join}"
-      else
-        "#{source}#{clauses.map { |clause| "\n  #{clause}" }.join}"
-      end
-    end
-
-    def self.print(source)
-      instance = new(source)
-      yield instance
-      instance.print
-    end
-  end
-
   module Conversions
     refine GDA::Nodes::Expr do
       def convert
@@ -136,22 +97,4 @@ module SQLToRuby
       end
     end
   end
-
-  using Conversions
-
-  def self.convert(sql)
-    GDA::SQL::Parser.new.parse(sql).ast.convert
-  end
-
-  class App < Sinatra::Base
-    get '/' do
-      send_file(File.expand_path('index.html', __dir__))
-    end
-
-    get '/convert' do
-      SQLToRuby.convert(params['sql'])
-    end
-  end
 end
-
-SQLToRuby::App.start!

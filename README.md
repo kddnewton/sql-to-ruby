@@ -4,7 +4,7 @@ This is a small application that parses SQL queries and converts them into equiv
 
 ## Development
 
-After checking out the repo, run `ruby app.rb` to start the server. Then you can view `http://localhost:4567` in your browser.
+After checking out the repo, run `bundle install` to get the dependencies. Then, run `bundle exec rackup` to start the server. Then you can view `http://localhost:9292` in your browser.
 
 ## Contributing
 
