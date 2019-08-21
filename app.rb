@@ -1,14 +1,15 @@
-#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 require 'bundler/inline'
 
 gemfile do
   source 'https://rubygems.org'
+
   gem 'gda'
+  gem 'sinatra'
 end
 
-module Converter
+module SQLToRuby
   class Printer
     LINE_LENGTH = 80
     attr_reader :source, :clauses
@@ -141,6 +142,16 @@ module Converter
   def self.convert(sql)
     GDA::SQL::Parser.new.parse(sql).ast.convert
   end
+
+  class App < Sinatra::Base
+    get '/' do
+      send_file(File.expand_path('index.html', __dir__))
+    end
+
+    get '/convert' do
+      SQLToRuby.convert(params['sql'])
+    end
+  end
 end
 
-puts Converter.convert(ARGV.first)
+SQLToRuby::App.start!
