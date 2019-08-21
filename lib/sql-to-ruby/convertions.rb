@@ -29,8 +29,7 @@ module SQLToRuby
     refine GDA::Nodes::Operation do
       def convert
         raise 'Cannot yet understand operators besides =' unless operator == '='
-        left, right = operands.map(&:convert)
-        "#{left}: \"#{right}\""
+        left, right = operands.map(&:convert).join(': ')
       end
     end
 
