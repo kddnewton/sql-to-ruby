@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SQLToRuby
   module Conversions
     refine GDA::Nodes::Expr do
@@ -28,8 +30,9 @@ module SQLToRuby
 
     refine GDA::Nodes::Operation do
       def convert
-        raise 'Cannot yet understand operators besides =' unless operator == '='
-        left, right = operands.map(&:convert).join(': ')
+        raise 'Cannot yet understand operators besides =' if operator != '='
+
+        operands.map(&:convert).join(': ')
       end
     end
 
@@ -43,6 +46,8 @@ module SQLToRuby
       end
     end
 
+    # rubocop:disable Layout/LineLength, Metrics/AbcSize, Metrics/MethodLength
+    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     refine GDA::Nodes::Select do
       def convert
         source = from.targets[0].convert[0...-1].capitalize
@@ -50,11 +55,11 @@ module SQLToRuby
         Printer.print(source) do |printer|
           if expr_list.length > 1 || expr_list[0].expr.value != '*'
             printer << ".select(#{expr_list.map { |node| node.convert(source) }.join(', ')})"
-          elsif from.targets.length == 1 && !where_cond && order_by.length == 0 && !limit_count && !limit_offset
+          elsif from.targets.length == 1 && !where_cond && order_by.empty? && !limit_count && !limit_offset
             printer << '.all'
           end
 
-          if from.targets.length > 0
+          if from.targets.any?
             from.joins.zip(from.targets[1..-1]).each do |join, target|
               printer << join.convert(target)
             end
@@ -62,7 +67,7 @@ module SQLToRuby
 
           printer << ".where(#{where_cond.convert})" if where_cond
 
-          if order_by.length > 0
+          if order_by.any?
             printer << ".order(#{order_by.map { |node| node.convert(source) }.join(', ')})"
           end
 
@@ -71,6 +76,8 @@ module SQLToRuby
         end
       end
     end
+    # rubocop:enable Layout/LineLength, Metrics/AbcSize, Metrics/MethodLength
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     refine GDA::Nodes::SelectField do
       def convert(source)

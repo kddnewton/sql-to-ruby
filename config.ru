@@ -3,19 +3,21 @@
 require 'bundler/setup'
 require 'sinatra'
 
-$:.unshift File.expand_path('lib', __dir__)
-require 'sql-to-ruby'
+$LOAD_PATH.unshift File.expand_path('lib', __dir__)
+require 'sql_to_ruby'
 
-class SQLToRuby::App < Sinatra::Base
-  APP_DIR = File.expand_path('app', __dir__)
+module SQLToRuby
+  class App < Sinatra::Base
+    APP_DIR = File.expand_path('app', __dir__)
 
-  get '/' do
-    send_file(File.join(APP_DIR, 'index.html'))
+    get '/' do
+      send_file(File.join(APP_DIR, 'index.html'))
+    end
+
+    get '/convert' do
+      SQLToRuby.convert(params['sql'])
+    end
   end
 
-  get '/convert' do
-    SQLToRuby.convert(params['sql'])
-  end
+  run App
 end
-
-run SQLToRuby::App

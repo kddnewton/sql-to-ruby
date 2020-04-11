@@ -2,8 +2,8 @@
 
 require 'gda'
 
-require 'sql-to-ruby/convertions'
-require 'sql-to-ruby/printer'
+require 'sql_to_ruby/conversions'
+require 'sql_to_ruby/printer'
 
 module SQLToRuby
   using Conversions
