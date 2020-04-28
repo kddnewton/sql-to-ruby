@@ -18,6 +18,6 @@ module SQLToRuby
       SQLToRuby.convert(params['sql'])
     end
   end
-
-  run App
 end
+
+run SQLToRuby::App
