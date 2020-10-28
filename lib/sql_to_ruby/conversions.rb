@@ -60,7 +60,7 @@ module SQLToRuby
           end
 
           if from.targets.any?
-            from.joins.zip(from.targets[1..-1]).each do |join, target|
+            from.joins.zip(from.targets[1..]).each do |join, target|
               printer << join.convert(target)
             end
           end
