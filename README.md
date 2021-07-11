@@ -12,7 +12,7 @@ If you have trouble installing the `gda` gem, it's likely because you don't have
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/kddeisz/sql-to-ruby.
+Bug reports and pull requests are welcome on GitHub at https://github.com/kddnewton/sql-to-ruby.
 
 ## License
 
